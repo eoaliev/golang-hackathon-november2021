@@ -5,13 +5,28 @@ import (
     "time"
 )
 
-var start time.Time
+var timers map[string]time.Time
 
-func ActualizeTimer() {
-    start = time.Now()
+
+func ActualizeTimer(name string) {
+    if (timers == nil) {
+        timers = make(map[string]time.Time)
+    }
+
+    timers[name] = time.Now()
 }
 
-func PrintDuration(msg string) {
-    elapsed := time.Since(start)
+func PrintDuration(name string, msg string) {
+    if _, ok := timers[name]; !ok {
+        return
+    }
+
+    elapsed := time.Since(timers[name])
     fmt.Printf(msg+" %s\n", elapsed)
+}
+
+func StopTimer(name string) {
+    if _, ok := timers[name]; ok {
+        delete(timers, name)
+    }
 }

@@ -8,19 +8,19 @@ import (
 )
 
 func main() {
-	utils.ActualizeTimer()
+	utils.ActualizeTimer("main")
 
     transactions := datajson.GetTransactions()
 
-    utils.PrintDuration("Parse json for")
+    utils.PrintDuration("main", "Parse json for")
 
-    utils.ActualizeTimer()
+    utils.ActualizeTimer("main")
 
-    report := reports.GenerateUsersExpensesReport(transactions)
+    report := reports.TransactionsToUsersExpensesReport(transactions)
 
-    utils.PrintDuration("Generate report for")
+    utils.PrintDuration("main", "Generate report for")
 
-    utils.ActualizeTimer()
+    utils.ActualizeTimer("main")
 
     err := reports.WriteReportToJsonFile(report, reports.GetUsersExpensesReportFileName())
     if (err != nil) {
@@ -28,5 +28,7 @@ func main() {
         return
     }
 
-    utils.PrintDuration("Write report to json file for")
+    utils.PrintDuration("main", "Write report to json file for")
+
+    utils.StopTimer("main")
 }
