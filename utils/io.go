@@ -17,6 +17,8 @@ func ReadBytesOfJsonFile(relativePath string) ([]byte, error) {
         return nil, err
     }
 
+    defer file.Close()
+
     byteFile, err := ioutil.ReadAll(file)
     if err != nil {
         return nil, err
