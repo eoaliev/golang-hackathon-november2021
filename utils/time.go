@@ -7,12 +7,11 @@ import (
 
 var timers map[string]time.Time
 
+func init() {
+    timers = make(map[string]time.Time)
+}
 
 func ActualizeTimer(name string) {
-    if (timers == nil) {
-        timers = make(map[string]time.Time)
-    }
-
     timers[name] = time.Now()
 }
 
