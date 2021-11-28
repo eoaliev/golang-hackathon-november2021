@@ -8,15 +8,9 @@ import (
 )
 
 func main() {
-	utils.ActualizeTimer("main")
-
-    transactions := datajson.GetTransactions()
-
-    utils.PrintDuration("main", "Parse json for")
-
     utils.ActualizeTimer("main")
 
-    report := reports.TransactionsToUsersExpensesReport(transactions)
+    report := reports.TransactionsToUsersExpensesReport(datajson.GetTransactions())
 
     utils.PrintDuration("main", "Generate report for")
 

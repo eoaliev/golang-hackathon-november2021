@@ -9,7 +9,8 @@ import (
 
 type Transaction struct {
     UserID int `json:"user_id"`
-    Timestamp string `json:"timestamp"`
+    // Закоментировал потому что в тестовых файлах на 1M и на 10M тип int а в предыдущих string
+    // Timestamp string `json:"timestamp"`
     Category string `json:"category"`
     Card string `json:"card"`
     Amount int `json:"amount"`
@@ -18,15 +19,24 @@ type Transaction struct {
 var transactions []Transaction
 
 func init() {
+    utils.ActualizeTimer("datajson")
     byteFile, err := utils.ReadBytesOfJsonFile("/datajson/transactions.json")
     if err != nil {
         er(err)
     }
 
+    utils.PrintDuration("datajson", "Read json for")
+
+    utils.ActualizeTimer("datajson")
+
     err = json.Unmarshal(byteFile, &transactions)
     if err != nil {
         er(err)
     }
+
+    utils.PrintDuration("datajson", "Parse json for")
+
+    utils.StopTimer("datajson")
 }
 
 func GetTransactions() ([]Transaction) {
