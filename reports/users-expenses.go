@@ -10,6 +10,11 @@ type UserExpenseCategory struct {
     Sum int `json:"sum"`
 }
 
+type UserCategoryIndex struct {
+    UserID int
+    Category string
+}
+
 type UserExpense struct {
     UserID int `json:"user_id"`
     Sum int `json:"sum"`
@@ -17,11 +22,20 @@ type UserExpense struct {
 }
 
 func TransactionsToUsersExpensesReport(transactions []datajson.Transaction) ([]UserExpense) {
-    usersExpensesMap := transactionsToUsersExpenseMap(transactions);
+    userCategoryExpenseMap := transactionsToUserCategoryExpenseMap(transactions);
 
-    report := make([]UserExpense, 0, len(usersExpensesMap))
-    for userId, userExpensesMap := range usersExpensesMap {
-        userExpense := getUserExpenseByUserIdAndMap(userId, userExpensesMap)
+    usersExpenseCategoriesMap, usersExpenseSumMap := getUsersExpenseCategoriesAndSum(userCategoryExpenseMap);
+
+    var userExpense UserExpense
+
+    report := make([]UserExpense, 0, len(usersExpenseCategoriesMap))
+    for userId, categories := range usersExpenseCategoriesMap {
+        userExpense.UserID = userId
+        userExpense.Categories = categories
+
+        if sum, ok := usersExpenseSumMap[userId]; ok {
+            userExpense.Sum = sum
+        }
 
         report = append(report, userExpense)
     }
@@ -29,48 +43,44 @@ func TransactionsToUsersExpensesReport(transactions []datajson.Transaction) ([]U
     return report
 }
 
-func transactionsToUsersExpenseMap(transactions []datajson.Transaction) (map[int]map[string]UserExpenseCategory) {
+func transactionsToUserCategoryExpenseMap(transactions []datajson.Transaction) (map[UserCategoryIndex]UserExpenseCategory) {
     var userExpenseCategory UserExpenseCategory
+    var userCategoryIndex UserCategoryIndex
 
-    usersExpensesMap := map[int]map[string]UserExpenseCategory{}
+    userCategoryExpenseMap := map[UserCategoryIndex]UserExpenseCategory{}
     for _, transaction := range transactions {
-        if _, ok := usersExpensesMap[transaction.UserID]; !ok {
-            usersExpensesMap[transaction.UserID] = map[string]UserExpenseCategory{}
-        }
+        userCategoryIndex.UserID = transaction.UserID
+        userCategoryIndex.Category = transaction.Category
 
         userExpenseCategory.Name = transaction.Category
         userExpenseCategory.Count = 1
         userExpenseCategory.Sum = transaction.Amount
 
-        if i, ok := usersExpensesMap[transaction.UserID][transaction.Category]; ok {
+        if i, ok := userCategoryExpenseMap[userCategoryIndex]; ok {
             userExpenseCategory.Count += i.Count
             userExpenseCategory.Sum += i.Sum
         }
 
-        usersExpensesMap[transaction.UserID][transaction.Category] = userExpenseCategory
+        userCategoryExpenseMap[userCategoryIndex] = userExpenseCategory
     }
 
-    return usersExpensesMap;
+    return userCategoryExpenseMap
 }
 
-func getUserExpenseByUserIdAndMap(userId int, userExpensesMap map[string]UserExpenseCategory) (UserExpense) {
-    var userExpense UserExpense
-    userExpense.UserID = userId
-    userExpense.Categories, userExpense.Sum = usersExpensesMapToCategoriesAndSum(userExpensesMap)
+func getUsersExpenseCategoriesAndSum(userCategoryExpenseMap map[UserCategoryIndex]UserExpenseCategory) (map[int][]UserExpenseCategory, map[int]int) {
+    usersExpenseCategoriesMap := map[int][]UserExpenseCategory{}
+    usersExpenseSumMap := map[int]int{}
+    for userCategoryIndex, userExpenseCategory := range userCategoryExpenseMap {
+        usersExpenseCategoriesMap[userCategoryIndex.UserID] = append(usersExpenseCategoriesMap[userCategoryIndex.UserID], userExpenseCategory)
 
-    return userExpense
-}
+        if _, ok := usersExpenseSumMap[userCategoryIndex.UserID]; !ok {
+            usersExpenseSumMap[userCategoryIndex.UserID] = 0
+        }
 
-func usersExpensesMapToCategoriesAndSum(userExpensesMap map[string]UserExpenseCategory) ([]UserExpenseCategory, int) {
-    categories := make([]UserExpenseCategory, 0, len(userExpensesMap))
-    sum := 0
-
-    for _, userExpenseCategory := range userExpensesMap {
-        categories = append(categories, userExpenseCategory)
-        sum += userExpenseCategory.Sum
+        usersExpenseSumMap[userCategoryIndex.UserID] += userExpenseCategory.Sum
     }
 
-    return categories, sum
+    return usersExpenseCategoriesMap, usersExpenseSumMap;
 }
 
 func GetUsersExpensesReportFileName() (string) {
