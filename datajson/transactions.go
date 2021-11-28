@@ -20,7 +20,8 @@ var transactions []Transaction
 
 func init() {
     utils.ActualizeTimer("datajson")
-    byteFile, err := utils.ReadBytesOfJsonFile("/datajson/transactions.json")
+
+    byteFile, err := utils.ReadBytesOfJsonFile("/staticfiles/transactions.json")
     if err != nil {
         er(err)
     }
@@ -39,11 +40,11 @@ func init() {
     utils.StopTimer("datajson")
 }
 
-func GetTransactions() ([]Transaction) {
-    return transactions
-}
-
 func er(msg interface{}) {
     fmt.Println("Error:", msg)
     os.Exit(1)
+}
+
+func GetTransactions() ([]Transaction) {
+    return transactions
 }

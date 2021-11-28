@@ -12,7 +12,7 @@ ADD go.mod ./go.mod
 
 RUN go mod download
 
-COPY . .
+ADD . .
 
 RUN go test ./...
 
@@ -26,6 +26,5 @@ FROM scratch
 
 COPY --from=builder /dist/main /
 ADD staticfiles ./staticfiles
-Add ./datajson/transactions.json /datajson/transactions.json
 
 ENTRYPOINT ["/main"]
