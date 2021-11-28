@@ -16,22 +16,12 @@ type UserExpense struct {
     Categories []UserExpenseCategory `json:"categories"`
 }
 
-var usersExpensesMap map[int]map[string]UserExpenseCategory
-
-func GenerateUsersExpensesReport(transactions []datajson.Transaction) ([]UserExpense) {
-    InitUsersExpenseMap(transactions);
+func TransactionsToUsersExpensesReport(transactions []datajson.Transaction) ([]UserExpense) {
+    usersExpensesMap := transactionsToUsersExpenseMap(transactions);
 
     report := make([]UserExpense, 0, len(usersExpensesMap))
     for userId, userExpensesMap := range usersExpensesMap {
-        var userExpense UserExpense
-        userExpense.UserID = userId
-        userExpense.Sum = 0
-        userExpense.Categories = make([]UserExpenseCategory, 0, len(userExpensesMap))
-
-        for _, userExpenseCategory := range userExpensesMap {
-            userExpense.Categories = append(userExpense.Categories, userExpenseCategory)
-            userExpense.Sum += userExpenseCategory.Sum
-        }
+        userExpense := getUserExpenseByUserIdAndMap(userId, userExpensesMap)
 
         report = append(report, userExpense)
     }
@@ -39,28 +29,48 @@ func GenerateUsersExpensesReport(transactions []datajson.Transaction) ([]UserExp
     return report
 }
 
-func InitUsersExpenseMap(transactions []datajson.Transaction) {
-    usersExpensesMap = map[int]map[string]UserExpenseCategory{}
+func transactionsToUsersExpenseMap(transactions []datajson.Transaction) (map[int]map[string]UserExpenseCategory) {
+    var userExpenseCategory UserExpenseCategory
+
+    usersExpensesMap := map[int]map[string]UserExpenseCategory{}
     for _, transaction := range transactions {
-        if i, ok := usersExpensesMap[transaction.UserID][transaction.Category]; ok {
-            i.Sum += transaction.Amount
-            i.Count++
-            usersExpensesMap[transaction.UserID][transaction.Category] = i
-            continue
-        }
-
-        var i UserExpenseCategory
-        i.Name = transaction.Category
-        i.Count = 1
-        i.Sum = transaction.Amount
-
         if _, ok := usersExpensesMap[transaction.UserID]; !ok {
             usersExpensesMap[transaction.UserID] = map[string]UserExpenseCategory{}
-            continue
         }
 
-        usersExpensesMap[transaction.UserID][transaction.Category] = i
+        userExpenseCategory.Name = transaction.Category
+        userExpenseCategory.Count = 1
+        userExpenseCategory.Sum = transaction.Amount
+
+        if i, ok := usersExpensesMap[transaction.UserID][transaction.Category]; ok {
+            userExpenseCategory.Count += i.Count
+            userExpenseCategory.Sum += i.Sum
+        }
+
+        usersExpensesMap[transaction.UserID][transaction.Category] = userExpenseCategory
     }
+
+    return usersExpensesMap;
+}
+
+func getUserExpenseByUserIdAndMap(userId int, userExpensesMap map[string]UserExpenseCategory) (UserExpense) {
+    var userExpense UserExpense
+    userExpense.UserID = userId
+    userExpense.Categories, userExpense.Sum = usersExpensesMapToCategoriesAndSum(userExpensesMap)
+
+    return userExpense
+}
+
+func usersExpensesMapToCategoriesAndSum(userExpensesMap map[string]UserExpenseCategory) ([]UserExpenseCategory, int) {
+    categories := make([]UserExpenseCategory, 0, len(userExpensesMap))
+    sum := 0
+
+    for _, userExpenseCategory := range userExpensesMap {
+        categories = append(categories, userExpenseCategory)
+        sum += userExpenseCategory.Sum
+    }
+
+    return categories, sum
 }
 
 func GetUsersExpensesReportFileName() (string) {
