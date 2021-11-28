@@ -4,4 +4,4 @@ build:
 	docker build . -t go-hackathon
 
 run:
-	docker run go-hackathon
+	docker container run --rm --name go-hackathon -it go-hackathon
